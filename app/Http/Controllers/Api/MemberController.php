@@ -9,6 +9,10 @@ use App\Http\Resources\MemberResource;
 use App\Models\Member;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use App\Http\Requests\ResetMemberPasswordRequest;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
 
 class MemberController extends Controller
 {
@@ -53,4 +57,48 @@ class MemberController extends Controller
 
         return $this->success('Member deleted successfully');
     }
+
+    public function resetPassword(
+    ResetMemberPasswordRequest $request,
+    Member $member
+): JsonResponse {
+    if (! $member->user_id) {
+        return $this->error(
+            'Anggota ini belum memiliki akun login.',
+            409
+        );
+    }
+
+    $user = User::find($member->user_id);
+
+    if (! $user) {
+        return $this->error(
+            'Akun login anggota tidak ditemukan.',
+            409
+        );
+    }
+
+    if ($user->role !== 'member') {
+        return $this->error(
+            'Endpoint ini hanya untuk akun dengan peran member.',
+            403
+        );
+    }
+
+    $password = $request->validated()['password'];
+
+    if (Hash::check($password, $user->password)) {
+        return $this->error(
+            'Kata sandi baru harus berbeda dari kata sandi anggota saat ini.',
+            422
+        );
+    }
+
+    $user->password = $password;
+    $user->save();
+
+    return $this->success(
+        'Kata sandi akun anggota berhasil diubah.'
+    );
+}
 }

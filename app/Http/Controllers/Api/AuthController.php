@@ -11,6 +11,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Http\Requests\ChangePasswordRequest;
 
 class AuthController extends Controller
 {
@@ -69,6 +70,29 @@ class AuthController extends Controller
 
         return $this->success('Logged out successfully');
     }
+
+    public function changePassword(ChangePasswordRequest $request): JsonResponse
+{
+
+    if (! config('jwt.blacklist_enabled')) {
+        return $this->error(
+            'Perubahan kata sandi belum tersedia karena blacklist JWT belum aktif.',
+            503
+        );
+    }
+
+    $user = auth('api')->user();
+
+    $user->password = $request->validated()['password'];
+    $user->save();
+
+    // Mencabut token yang digunakan pada request ini.
+    auth('api')->logout();
+
+    return $this->success(
+        'Kata sandi berhasil diubah. Silakan login kembali.'
+    );
+}
 
     private function tokenData(string $token): array
     {

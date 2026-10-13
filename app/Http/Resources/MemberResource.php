@@ -18,6 +18,7 @@ class MemberResource extends JsonResource
             'address' => $this->address,
             'status' => $this->status,
             'created_at' => $this->created_at,
+            'has_account' => $this->user_id !== null,
             'updated_at' => $this->updated_at,
         ];
     }
