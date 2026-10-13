@@ -18,30 +18,40 @@ class AuthController extends Controller
     use ApiResponse;
 
     public function register(RegisterRequest $request): JsonResponse
-    {
-        // Register selalu membuat akun anggota. Peran tidak diambil dari request.
-        $user = DB::transaction(function () use ($request) {
-            $user = User::create($request->validated());
+{
+    $data = $request->validated();
 
-            Member::create([
-                'user_id' => $user->id,
-                'member_code' => 'MBR-'.Str::upper(Str::random(6)),
-                'name' => $user->name,
-                'email' => $user->email,
-                'status' => 'active',
-            ]);
+    $user = DB::transaction(function () use ($data) {
+        $user = new User();
 
-            return $user;
-        });
+        $user->name = $data['name'];
+        $user->email = $data['email'];
+        $user->password = $data['password'];
 
-        $user->refresh()->load('member');
-        $token = auth('api')->login($user);
+        // Role selalu ditentukan backend, bukan request.
+        $user->role = 'member';
+        $user->save();
 
-        return $this->success('User registered successfully', [
-            'user' => $user,
-            'token' => $this->tokenData($token),
-        ], 201);
-    }
+        Member::create([
+            'user_id' => $user->id,
+            'member_code' => 'MBR-' . Str::upper(Str::random(6)),
+            'name' => $user->name,
+            'email' => $user->email,
+            'status' => 'active',
+        ]);
+
+        return $user;
+    });
+
+    $user->refresh()->load('member');
+
+    $token = auth('api')->login($user);
+
+    return $this->success('User registered successfully', [
+        'user' => $user,
+        'token' => $this->tokenData($token),
+    ], 201);
+}
 
     public function login(LoginRequest $request): JsonResponse
     {

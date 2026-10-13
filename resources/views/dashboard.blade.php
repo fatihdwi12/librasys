@@ -54,7 +54,7 @@
 
     <!-- Grid Cards -->
     <div class="row g-4 mb-4">
-        <!-- Card 1: Total Books -->
+        <!-- Card 1: Total Books (Judul Buku) -->
         <div class="col-md-4">
             <div class="dashboard-card">
                 <div class="card-header-custom">
@@ -90,7 +90,7 @@
 
     <!-- Row 2 -->
     <div class="row g-4">
-        <!-- Card 4: Available Books -->
+        <!-- Card 4: Available Books (Total Stok Eksemplar Tersedia) -->
         <div class="col-md-4">
             <div class="dashboard-card">
                 <div class="card-header-custom">
@@ -105,21 +105,60 @@
 
 @push('scripts')
 <script>
+    // Helper function untuk mengambil SELURUH data buku melintasi semua halaman paginasi
+    async function fetchAllBooks() {
+        let allBooks = [];
+        let page = 1;
+        let lastPage = 1;
+        let totalMeta = 0;
+
+        do {
+            const response = await apiFetch(`/books?page=${page}&per_page=100`);
+            const data = Array.isArray(response.data) ? response.data : [];
+            allBooks.push(...data);
+
+            lastPage = Number(response.meta?.last_page || 1);
+            totalMeta = Number(response.meta?.total || allBooks.length);
+            page++;
+        } while (page <= lastPage);
+
+        return {
+            total: totalMeta,
+            books: allBooks
+        };
+    }
+
     async function loadDashboard() {
         try {
-            const [books, members, loans] = await Promise.all([
-                apiFetch('/books?per_page=100'),
+            const [booksData, membersResponse, loansResponse] = await Promise.all([
+                fetchAllBooks(),
                 apiFetch('/members'),
                 apiFetch('/loans?status=borrowed'),
             ]);
 
-            document.getElementById('total-books').textContent = books.meta.total;
-            document.getElementById('available-books').textContent =
-                books.data.filter((book) => book.stock > 0).length;
-            document.getElementById('total-members').textContent = members.data.length;
-            document.getElementById('active-loans').textContent = loans.data.length;
+            const books = booksData.books;
+            const members = Array.isArray(membersResponse.data) ? membersResponse.data : [];
+            const loans = Array.isArray(loansResponse.data) ? loansResponse.data : [];
+
+            // 1. Total Judul Buku
+            document.getElementById('total-books').textContent = booksData.total;
+
+            // 2. Total Anggota
+            document.getElementById('total-members').textContent = members.length;
+
+            // 3. Peminjaman Aktif
+            document.getElementById('active-loans').textContent = loans.length;
+
+            // 4. Available Books (Total Jumlah Fisik Eksemplar Stok yang Tersedia saat ini)
+            const totalAvailableStock = books.reduce((sum, book) => {
+                const stock = Number(book.stock);
+                return sum + (isNaN(stock) ? 0 : stock);
+            }, 0);
+
+            document.getElementById('available-books').textContent = totalAvailableStock;
+
         } catch (error) {
-            showAlert(error.message);
+            showAlert(error.message || 'Gagal memuat data dashboard.');
         }
     }
 

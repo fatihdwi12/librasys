@@ -261,6 +261,7 @@
                             <span id="password-member-name"
                                   class="text-light"></span>
                         </p>
+                        
 
                         <div id="member-password-error"
                              class="alert alert-danger d-none"
@@ -318,7 +319,8 @@
                                    required>
                         </div>
 
-                        <p class="small text-secondary mb-0">
+                        <p id="member-account-help"
+                        class="small text-secondary mb-0">
                             Perubahan ini tidak otomatis mengakhiri
                             sesi anggota pada perangkat lain.
                         </p>
@@ -461,6 +463,20 @@
     let editingMemberId = null;
     let passwordMemberId = null;
 
+    let accountMode = 'password';
+
+function canCreateAccount(member) {
+    return member.has_account === false
+        && member.status === 'active'
+        && String(member.email ?? '').trim() !== '';
+}
+
+function accountSubmitLabel() {
+    return accountMode === 'account'
+        ? 'Buat Akun Login'
+        : 'Ganti Kata Sandi';
+}
+
     let appliedFilters = {
         search: '',
         status: '',
@@ -483,12 +499,20 @@
         });
 
         membersBody.querySelectorAll('button[data-action]').forEach((button) => {
-            const unavailable =
-                button.dataset.action === 'password'
-                && button.dataset.hasAccount !== 'true';
+    const action = button.dataset.action;
 
-            button.disabled = busy || unavailable;
-        });
+    const unavailable =
+        (
+            action === 'password'
+            && button.dataset.hasAccount !== 'true'
+        )
+        || (
+            action === 'account'
+            && button.dataset.canCreateAccount !== 'true'
+        );
+
+    button.disabled = busy || unavailable;
+});
 
         saveButton.disabled = savingMember;
 
@@ -578,6 +602,33 @@
 
             const hasAccount = member.has_account === true;
 
+            const canCreate = canCreateAccount(member);
+
+const accountButton = hasAccount
+    ? `
+        <button type="button"
+                class="btn btn-outline-warning btn-sm ms-1"
+                data-action="password"
+                data-id="${Number(member.id)}"
+                data-has-account="true"
+                title="Ganti kata sandi akun anggota">
+            <i class="bi bi-key me-1"></i>
+            Kata Sandi
+        </button>`
+    : `
+        <button type="button"
+                class="btn btn-outline-success btn-sm ms-1"
+                data-action="account"
+                data-id="${Number(member.id)}"
+                data-can-create-account="${canCreate}"
+                title="${canCreate
+                    ? 'Buat akun untuk anggota ini'
+                    : 'Memerlukan anggota aktif dengan email'}"
+                ${canCreate ? '' : 'disabled'}>
+            <i class="bi bi-person-plus me-1"></i>
+            Buat Akun Login
+        </button>`;
+
             return `
                 <tr>
                     <td class="text-nowrap">
@@ -605,7 +656,7 @@
                                 data-action="edit"
                                 data-id="${Number(member.id)}">
                             <i class="bi bi-pencil me-1"></i>
-                            Ubah
+                            
                         </button>
 
                         <button type="button"
@@ -613,7 +664,7 @@
                                 data-action="delete"
                                 data-id="${Number(member.id)}">
                             <i class="bi bi-trash me-1"></i>
-                            Hapus
+                            
                         </button>
 
                         <button type="button"
@@ -626,7 +677,7 @@
                                     : 'Anggota belum memiliki akun login'}"
                                 ${hasAccount ? '' : 'disabled'}>
                             <i class="bi bi-key me-1"></i>
-                            Kata Sandi
+                            
                         </button>
                     </td>
                 </tr>`;

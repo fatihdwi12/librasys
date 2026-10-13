@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\CreateMemberAccountRequest;
+use DomainException;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMemberRequest;
 use App\Http\Requests\UpdateMemberRequest;
@@ -99,6 +103,79 @@ class MemberController extends Controller
 
     return $this->success(
         'Kata sandi akun anggota berhasil diubah.'
+    );
+}
+
+public function createAccount(
+    CreateMemberAccountRequest $request,
+    Member $member
+): JsonResponse {
+    $data = $request->validated();
+
+    try {
+        $member = DB::transaction(function () use ($member, $data) {
+            $member = Member::lockForUpdate()->findOrFail($member->id);
+
+            if ($member->user_id !== null) {
+                throw new DomainException(
+                    'Anggota ini sudah memiliki akun login.'
+                );
+            }
+
+            if ($member->status !== 'active') {
+                throw new DomainException(
+                    'Akun login hanya dapat dibuat untuk anggota aktif.'
+                );
+            }
+
+            $email = strtolower(trim((string) $member->email));
+
+            if (
+                $email === '' ||
+                ! filter_var($email, FILTER_VALIDATE_EMAIL)
+            ) {
+                throw new DomainException(
+                    'Anggota harus memiliki email yang valid terlebih dahulu.'
+                );
+            }
+
+            if (User::where('email', $email)->exists()) {
+                throw new DomainException(
+                    'Email anggota sudah digunakan oleh akun lain. ' .
+                    'Periksa hubungan akun; jangan membuat akun kedua.'
+                );
+            }
+
+            $user = new User();
+            $user->name = $member->name;
+            $user->email = $email;
+            $user->password = $data['password'];
+            $user->role = 'member';
+            $user->save();
+
+            $member->update([
+                'user_id' => $user->id,
+                'email' => $email,
+            ]);
+
+            return $member;
+        });
+    } catch (DomainException $e) {
+        return $this->error($e->getMessage(), 409);
+    } catch (UniqueConstraintViolationException $e) {
+        return $this->error(
+            'Email atau hubungan akun sudah digunakan. ' .
+            'Muat ulang data anggota dan periksa kembali.',
+            409
+        );
+    }
+
+    $member->load('user');
+
+    return $this->success(
+        'Akun login anggota berhasil dibuat.',
+        new MemberResource($member),
+        201
     );
 }
 }

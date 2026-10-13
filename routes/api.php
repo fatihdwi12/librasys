@@ -19,26 +19,17 @@ Route::middleware('auth:api')->group(function () {
         'changePassword',
     ])->middleware('throttle:5,1');
 
-    // Admin dan anggota: akses baca.
+    // Akses Baca (Admin & Member)
     Route::get('books', [BookController::class, 'index']);
     Route::get('books/{book}', [BookController::class, 'show']);
-
     Route::get('categories', [CategoryController::class, 'index']);
-    Route::get('categories/{category}', [
-        CategoryController::class,
-        'show',
-    ]);
-
+    Route::get('categories/{category}', [CategoryController::class, 'show']);
     Route::get('my-loans', [LoanController::class, 'myLoans']);
 
-    // Hanya admin: pengelolaan data.
+    // Akses Kelola (Hanya Admin)
     Route::middleware('role:admin')->group(function () {
-        Route::apiResource('categories', CategoryController::class)
-            ->except(['index', 'show']);
-
-        Route::apiResource('books', BookController::class)
-            ->except(['index', 'show']);
-
+        Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
+        Route::apiResource('books', BookController::class)->except(['index', 'show']);
         Route::apiResource('members', MemberController::class);
 
         Route::put('members/{member}/password', [
@@ -46,10 +37,13 @@ Route::middleware('auth:api')->group(function () {
             'resetPassword',
         ])->middleware('throttle:5,1');
 
-        Route::put('loans/{loan}/return', [
-            LoanController::class,
-            'returnBook',
-        ]);
+        Route::post('members/{member}/account', [
+            MemberController::class,
+            'createAccount',
+        ])->middleware('throttle:5,1');
+
+        // Endpoint Khusus Pengembalian Buku
+        Route::put('/loans/{loan}/return', [LoanController::class, 'returnBook']);
 
         Route::apiResource('loans', LoanController::class);
     });

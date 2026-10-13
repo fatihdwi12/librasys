@@ -415,7 +415,7 @@
                                 data-action="edit"
                                 data-id="${Number(book.id)}">
                             <i class="bi bi-pencil me-1"></i>
-                            Ubah
+                            
                         </button>
 
                         <button type="button"
@@ -423,7 +423,7 @@
                                 data-action="delete"
                                 data-id="${Number(book.id)}">
                             <i class="bi bi-trash me-1"></i>
-                            Hapus
+                           
                         </button>
                     </td>
                 </tr>`;

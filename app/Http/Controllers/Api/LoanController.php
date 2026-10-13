@@ -89,9 +89,9 @@ class LoanController extends Controller
         return $this->success('Book returned successfully', new LoanResource($loan));
     }
 
-        public function myLoans(): JsonResponse
+    public function myLoans(): JsonResponse
     {
-        $member = auth('api')->user()->member;
+        $member = auth('api')->user()?->member;
 
         if (! $member) {
             return $this->success('Loans retrieved successfully', []);
