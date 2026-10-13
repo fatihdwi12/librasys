@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -55,7 +56,10 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->getKey();
     }
-
+    public function member(): HasOne
+    {
+        return $this->hasOne(Member::class);
+    }
     /**
      * Klaim tambahan pada token (tidak dipakai saat ini).
      */

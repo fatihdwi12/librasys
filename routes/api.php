@@ -14,10 +14,20 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::apiResource('categories', CategoryController::class);
-    Route::apiResource('books', BookController::class);
-    Route::apiResource('members', MemberController::class);
+    // Admin dan anggota: hanya baca
+    Route::get('books', [BookController::class, 'index']);
+    Route::get('books/{book}', [BookController::class, 'show']);
+    Route::get('categories', [CategoryController::class, 'index']);
+    Route::get('categories/{category}', [CategoryController::class, 'show']);
+    Route::get('my-loans', [LoanController::class, 'myLoans']);
 
-    Route::put('loans/{loan}/return', [LoanController::class, 'returnBook']);
-    Route::apiResource('loans', LoanController::class);
+    // Hanya admin: pengelolaan data
+    Route::middleware('role:admin')->group(function () {
+        Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
+        Route::apiResource('books', BookController::class)->except(['index', 'show']);
+        Route::apiResource('members', MemberController::class);
+
+        Route::put('loans/{loan}/return', [LoanController::class, 'returnBook']);
+        Route::apiResource('loans', LoanController::class);
+    });
 });
