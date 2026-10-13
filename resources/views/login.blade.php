@@ -9,6 +9,7 @@
     <!-- Bootstrap Icons untuk Icon Mata Password -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+
     <style>
         body {
             background-color: #eef0f2;
@@ -77,16 +78,20 @@
             <h1 class="h3 fw-bold text-start mb-1" style="color: #1a1a1a;">Librasys Login</h1>
             <p class="text-muted small mb-4">enjoy for you book!</p>
 
+
             <!-- Toggle Switch Login / Register -->
             <div class="toggle-capsule d-flex justify-content-between align-items-center mb-4">
                 <a href="/login" class="toggle-tab active text-center flex-fill">Log in</a>
                 <a href="/register" class="toggle-tab text-center flex-fill">Create Account</a>
             </div>
 
+
             <!-- Subtitle -->
             <h2 class="h6 fw-bold mb-3 text-start">Welcome Back!</h2>
 
+
             <div id="alert"></div>
+
 
             <!-- Form -->
             <form id="login-form">
@@ -94,6 +99,7 @@
                     <label for="email" class="form-label small fw-semibold text-secondary mb-1">Email</label>
                     <input type="email" class="form-control" id="email" placeholder="Put your email!" value="admin@librasys.test" required>
                 </div>
+
 
                 <div class="mb-4 text-start">
                     <label for="password" class="form-label small fw-semibold text-secondary mb-1">Password</label>
@@ -105,10 +111,18 @@
                     </div>
                 </div>
 
+
                 <button type="submit" class="btn btn-dark-custom w-100" id="login-btn">Login</button>
             </form>
+
+            <!-- Akun demo -->
+            <p class="text-muted small text-start mt-4 mb-0">
+                Demo admin: admin@librasys.test / password<br>
+                Demo anggota: member@librasys.test / password
+            </p>
         </div>
     </div>
+
 
     <script src="{{ asset('js/api.js') }}"></script>
     <script>
@@ -125,12 +139,15 @@
             }
         });
 
+
         // Submit Form Login
         document.getElementById('login-form').addEventListener('submit', async (event) => {
             event.preventDefault();
 
+
             const button = document.getElementById('login-btn');
             button.disabled = true;
+
 
             try {
                 const response = await apiFetch('/login', {
@@ -142,8 +159,13 @@
                     }),
                 });
 
+
+                // Simpan token dan peran, lalu arahkan sesuai peran
+                // (admin -> /dashboard, member -> /member)
+                const user = response.data.user;
                 Auth.setToken(response.data.token.access_token);
-                window.location.href = '/dashboard';
+                Auth.setRole(user.role);
+                window.location.href = homeFor(user.role);
             } catch (error) {
                 showAlert(formatErrors(error));
                 button.disabled = false;

@@ -146,12 +146,9 @@
                 });
 
                 // Setelah register berhasil, simpan token & ke dashboard (atau alihkan ke /login jika API mensyaratkan)
-                if (response.data && response.data.token) {
-                    Auth.setToken(response.data.token.access_token);
-                    window.location.href = '/dashboard';
-                } else {
-                    window.location.href = '/login';
-                }
+                Auth.setToken(response.data.token.access_token);
+                Auth.setRole(response.data.user.role);
+                window.location.href = homeFor(response.data.user.role);
             } catch (error) {
                 showAlert(formatErrors(error));
                 button.disabled = false;
