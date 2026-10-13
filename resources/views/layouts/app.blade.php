@@ -119,6 +119,11 @@
                     <i class="bi bi-arrow-repeat"></i>
                     <span>Active Loan</span>
                 </a>
+                <a href="/categories"
+                    class="nav-link-custom {{ request()->is('categories*') ? 'active' : '' }}">
+                        <i class="bi bi-tags"></i>
+                        <span>Categories</span>
+                    </a>
                 <a href="/available-books" class="nav-link-custom {{ request()->is('available-books*') ? 'active' : '' }}">
                     <i class="bi bi-calendar-check"></i>
                     <span>Available Books</span>
