@@ -115,11 +115,7 @@
                 <button type="submit" class="btn btn-dark-custom w-100" id="login-btn">Login</button>
             </form>
 
-            <!-- Akun demo -->
-            <p class="text-muted small text-start mt-4 mb-0">
-                Demo admin: admin@librasys.test / password<br>
-                Demo anggota: member@librasys.test / password
-            </p>
+            
         </div>
     </div>
 
